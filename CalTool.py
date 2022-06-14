@@ -1,4 +1,5 @@
 import os
+from re import L
 import sys
 import torch
 import math
@@ -115,5 +116,17 @@ def path_try():
         f.write('hi')
     print(path)
 
+def test_torchpi():
+    a = torch.randn([3,7])
+    b = a.clone()
+    c = torch.Tensor([[0],[0],[0]])
+    b[:,0] = torch.Tensor([0,0,0])
+    print(b)
+    print(a)
+    print(c)
+    print(c.T)
+    return 0
+
 if __name__ == '__main__':
-    path_try()
+    test_torchpi()
+    

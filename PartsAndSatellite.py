@@ -195,11 +195,93 @@ class Satellite:
                 f.write(f'f {str_point}')
                 f.write('\n')
 
+class MovingSatellite():
+    '''
+    move the satellite to take pictures of it
+    points -> satellite's points([x0,x1,x2,...],[y0,y1,y2,...],[z0,z1,z2,...])
+    face_num ->points' orders of the faces([f1p1_order,f1p2_order,f1p3_order],...)
+    hub_face_num -> the faces of the hub(int)
+    board_face_num -> the faces of the board(int)
+    nozzle_face_num -> the faces of the nozzle(int)
+    pose -> the pose of the satellite([theta,p1,p2,p3])
+    positon -> the position of the center of the satellite([x1],[y1],[z1])
+    '''
+    def __init__(
+        self,
+        points:torch.Tensor,
+        face_num:torch.Tensor,
+        hub_face_num:torch.Tensor,
+        board_face_num:torch.Tensor,
+        nozzle_face_num:torch.Tensor,
+        pose:torch.Tensor,
+        position:torch.Tensor
+    ):
+        self.points = points
+        self.face_num = face_num
+        self.hub_face_num = hub_face_num
+        self.board_face_num = board_face_num
+        self.nozzle_face_num = nozzle_face_num
+        self.points = cal.rot(self.points,pose[0],pose[1],pose[2],pose[3])
+        self.points = cal.moveto(self.points,position[0],position[1],position[2])
+
+
+class Kinect():
+    '''
+    kinect's shooting progress:
+    take the movingsatellite and output PointCloud into output_path
+    resolution -> resolution([x,y])
+    center -> the light center of the camera([[x0],[y0],[z0]])
+    aimpoint -> the carmera's aiming point([[x0],[y0],[z0]])
+    '''
+    def __init__(self,movingsatellite,output_path):
+        self.resolution = [20,10]
+        self.center = torch.Tensor([[0],[-3000],[0]])
+        self.aimpoint = torch.Tensor([[0],[0],[0]])
+        self.gen_radar_net()
+        self.projection = self.projection(movingsatellite)
+        self.gen_data_from_light(self.center,movingsatellite,self.radar_net)
+
+
+    def gen_radar_net(self):
+        maxx = torch.pi/2 
+        maxy = torch.pi/2 
+        self.radar_net = self.aimpoint
+        look_dis = abs(self.center[1])
+        num1 = (self.resolution[0]+1)/2
+        num2 = (self.resolution[1]+1)/2
+        anglex = torch.arange(maxx/num2,maxx,maxx/num2) 
+        angley = torch.arange(maxy/num1,maxy,maxy/num1) 
+        for theta_i in anglex:
+            for theta_j in angley:
+                xi= look_dis*torch.tan(theta_i)
+                yi = torch.Tensor([0])
+                zi = look_dis*torch.tan(theta_j)
+                right_up = torch.Tensor([[xi],[yi],[zi]])
+                right_down = torch.Tensor([[xi],[yi],[-zi]])
+                left_up = torch.Tensor([[-xi],[yi],[zi]])
+                left_down = torch.Tensor([[-xi],[yi],[-zi]])
+                self.radar_net = torch.cat((self.radar_net,right_up,right_down,left_up,left_down),dim = 1)
+        return 0
+
+    def projection(self,movingsatellite):
+        self.projection = movingsatellite.points.clone()
+        for i in range(len(self.projection.shape[1])):
+            vec = self.projection[:,i]
+            self.projection[:,i] = torch.Tensor([-self.center[1]/(vec[1]-self.center[1])*vec[0],0,-self.center[1]/(vec[1]-self.center[1])*vec[2]])
+    
+
+    def gen_data_from_light(self,center,movingsatellite,radar_net):
+        shoot_points = []
+        for i in raneg
+        
+
+    
 
 
 
 
 
 
-if __name__ == 'main':
-    print('hi')
+if __name__ == '__main__':
+    a = Kinect()
+    print(a.radar_net.shape)
